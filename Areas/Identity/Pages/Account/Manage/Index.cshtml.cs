@@ -33,21 +33,35 @@ namespace UserManagement.MVC.Areas.Identity.Pages.Account.Manage
 
         public class InputModel
         {
-            [Phone]
-            [Display(Name = "Phone number")]
-            public string PhoneNumber { get; set; }
+           [Display(Name = "First Name")]
+           public string FirstName { get; set; }
+           [Display(Name = "Last Name")]
+           public string LastName { get; set; }
+           [Display(Name = "Username")]
+           public string Username { get; set; }
+           [Phone]
+           [Display(Name = "Phone Number")]
+           public string PhoneNumber { get; set; }
+           [Display(Name = "Profile Picture")]
+           public byte[] ProfilePicture { get; set; }
         }
 
         private async Task LoadAsync(ApplicationUser user)
         {
             var userName = await _userManager.GetUserNameAsync(user);
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-
+            var firstName = user.FirstName;
+            var lastName = user.LastName;
+            var profilePicture = user.ProfilePicture;            
             Username = userName;
 
             Input = new InputModel
             {
-                PhoneNumber = phoneNumber
+                PhoneNumber = phoneNumber,
+                Username = userName,
+                FirstName = firstName,
+                LastName = lastName,
+                ProfilePicture = profilePicture
             };
         }
 
@@ -78,6 +92,9 @@ namespace UserManagement.MVC.Areas.Identity.Pages.Account.Manage
             }
 
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
+            var firstName = user.FirstName;
+            var lastName = user.LastName;
+
             if (Input.PhoneNumber != phoneNumber)
             {
                 var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
@@ -87,6 +104,19 @@ namespace UserManagement.MVC.Areas.Identity.Pages.Account.Manage
                     return RedirectToPage();
                 }
             }
+
+            if(Input.FirstName != firstName)
+            {
+                user.FirstName = Input.FirstName;
+                await _userManager.UpdateAsync(user);
+            }
+
+            if (Input.LastName != lastName)
+            {
+                user.LastName = Input.LastName;
+                await _userManager.UpdateAsync(user);
+            }
+
 
             await _signInManager.RefreshSignInAsync(user);
             StatusMessage = "Your profile has been updated";
