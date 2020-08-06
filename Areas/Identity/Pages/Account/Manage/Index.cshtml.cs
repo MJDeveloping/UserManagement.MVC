@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using UserManagement.MVC.Models;
 
 namespace UserManagement.MVC.Areas.Identity.Pages.Account.Manage
@@ -33,17 +33,17 @@ namespace UserManagement.MVC.Areas.Identity.Pages.Account.Manage
 
         public class InputModel
         {
-           [Display(Name = "First Name")]
-           public string FirstName { get; set; }
-           [Display(Name = "Last Name")]
-           public string LastName { get; set; }
-           [Display(Name = "Username")]
-           public string Username { get; set; }
-           [Phone]
-           [Display(Name = "Phone Number")]
-           public string PhoneNumber { get; set; }
-           [Display(Name = "Profile Picture")]
-           public byte[] ProfilePicture { get; set; }
+            [Display(Name = "First Name")]
+            public string FirstName { get; set; }
+            [Display(Name = "Last Name")]
+            public string LastName { get; set; }
+            [Display(Name = "Username")]
+            public string Username { get; set; }
+            [Phone]
+            [Display(Name = "Phone Number")]
+            public string PhoneNumber { get; set; }
+            [Display(Name = "Profile Picture")]
+            public byte[] ProfilePicture { get; set; }
         }
 
         private async Task LoadAsync(ApplicationUser user)
@@ -52,7 +52,7 @@ namespace UserManagement.MVC.Areas.Identity.Pages.Account.Manage
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
             var firstName = user.FirstName;
             var lastName = user.LastName;
-            var profilePicture = user.ProfilePicture;            
+            var profilePicture = user.ProfilePicture;
             Username = userName;
 
             Input = new InputModel
@@ -105,7 +105,7 @@ namespace UserManagement.MVC.Areas.Identity.Pages.Account.Manage
                 }
             }
 
-            if(Input.FirstName != firstName)
+            if (Input.FirstName != firstName)
             {
                 user.FirstName = Input.FirstName;
                 await _userManager.UpdateAsync(user);
@@ -117,6 +117,16 @@ namespace UserManagement.MVC.Areas.Identity.Pages.Account.Manage
                 await _userManager.UpdateAsync(user);
             }
 
+            if (Request.Form.Files.Count > 0)
+            {
+                IFormFile file = Request.Form.Files.FirstOrDefault();
+                using (var dataStream = new MemoryStream())
+                {
+                    await file.CopyToAsync(dataStream);
+                    user.ProfilePicture = dataStream.ToArray();
+                }
+                await _userManager.UpdateAsync(user);
+            }
 
             await _signInManager.RefreshSignInAsync(user);
             StatusMessage = "Your profile has been updated";
